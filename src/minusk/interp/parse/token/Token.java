@@ -75,5 +75,6 @@ public class Token {
 		BITWISE_XOR_ASSIGN,
 		LOGICAL_NOT,
 		BITWISE_NOT,
+		QUESTION,
 	}
 }

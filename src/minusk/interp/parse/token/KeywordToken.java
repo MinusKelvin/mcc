@@ -15,6 +15,6 @@ public class KeywordToken extends Token {
 	
 	@Override
 	public String toString() {
-		return "keyword:" + value.name;
+		return "keyword:" + value.name();
 	}
 }

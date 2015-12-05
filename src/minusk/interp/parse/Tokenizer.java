@@ -76,6 +76,8 @@ public class Tokenizer {
 						return new Token(Token.TokenType.SEMICOLON, line, lowch, ch);
 					else if (c == ',')
 						return new Token(Token.TokenType.COMMA, line, lowch, ch);
+					else if (c == '?')
+						return new Token(Token.TokenType.QUESTION, line, lowch, ch);
 					else if (c == '~')
 						return new Token(Token.TokenType.BITWISE_NOT, line, lowch, ch);
 					else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '<' || c == '>' ||
@@ -87,7 +89,7 @@ public class Tokenizer {
 					} else if (c == '\'') {
 						state = State.CHAR;
 					} else {
-						throw new SyntaxError("Unexpected character: '" + c + "' at line " + line + " character " + ch + ".");
+						throw new SyntaxError("Unexpected character: '" + c + "' at line " + line + " character " + (ch-1) + "-" + ch + ".");
 					}
 					break;
 				case IDENTIFIER:
@@ -98,6 +100,10 @@ public class Tokenizer {
 						ch--;
 						String name = builder.toString();
 						switch (name) {
+							case "lambda":
+								return new KeywordToken(Keyword.LAMBDA, line, lowch, ch);
+							case "return":
+								return new KeywordToken(Keyword.RETURN, line, lowch, ch);
 							case "static":
 								return new KeywordToken(Keyword.STATIC, line, lowch, ch);
 							case "struct":
@@ -114,6 +120,8 @@ public class Tokenizer {
 								return new KeywordToken(Keyword.FOR, line, lowch, ch);
 							case "if":
 								return new KeywordToken(Keyword.IF, line, lowch, ch);
+							case "do":
+								return new KeywordToken(Keyword.DO, line, lowch, ch);
 							default:
 								return new IdentifierToken(name, line, lowch, ch);
 						}
