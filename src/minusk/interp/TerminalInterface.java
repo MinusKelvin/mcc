@@ -1,6 +1,6 @@
 package minusk.interp;
 
-import minusk.interp.parse.SyntaxTree;
+import minusk.interp.parse.tree.ParseTree;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,9 +37,8 @@ public class TerminalInterface {
 			Scanner scanner = new Scanner(file).useDelimiter("\\Z");
 			String s = scanner.hasNext() ? scanner.next() : "";
 			scanner.close();
-			SyntaxTree syntree = new SyntaxTree();
-			syntree.generate(s);
-			System.out.println(syntree.toString());
+			ParseTree syntree = new ParseTree(s);
+			System.out.println(syntree);
 		}
 	}
 }

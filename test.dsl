@@ -1,3 +1,55 @@
+0;
+a;
+6*5;
+0*a;
+b*2;
+a*b;
+(0);
+(a);
+(6*5);
+(6)*5;
+(6*a);
+(6)*(a);
+0*(a*b);
+(3*a)*b;
+-2;
+-a;
+-(16*23);
+-3*-6;
+a/b;
+a%b;
+a+b;
+a-b;
+a+(b+c);
+1+3*6;
+6*4+5*3;
+a+b+c;
+0*1*2;
+0*a*6;
+1/2/3;
+a=b=c=0;
+!c;
+~b;
+-a;
+
+/*
+func int fib(int n) {
+	if (n == 1)
+		1
+	else if (n == 2)
+		1
+	else
+		fib(n-1) + fib(n-2)
+}
+
+int a;
+a + b;
+b;
+b = a + b;
+(a + b) + a;
+{a+b;a}+b
+[1,2,3,4,5];
+
 int a;                                                              // int uninitialized
 int b = 0;                                                          // int
 int c = 2 + 3;                                                      // int
@@ -26,4 +78,4 @@ int[5] y = [1,2,3,4,5];                                             // int[5]
 int[5] z = [0;5];                                                   // int[5]
 int[5][2] A = [[11,12,13,14,15],[21,22,23,24,25]];                  // int[5][2]
 func void(struct {int Ba, int Bb}) B;                               // void(struct{int Ba, int Bb}) uninitialized
-struct n {struct {int na, float nb}, int nc};                       // n == struct{struct{int na, float nb}, int nc} declaration
+struct n {struct {int na, float nb}, int nc};                       // n == struct{struct{int na, float nb}, int nc} declaration*/

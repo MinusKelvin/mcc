@@ -3,12 +3,14 @@ package minusk.interp.parse;
 import minusk.interp.parse.token.*;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 /**
  * Created by MinusKelvin on 12/3/15.
  */
 public class Tokenizer {
 	private final ArrayDeque<Character> characters;
+	private final ArrayList<Token> pushedTokens = new ArrayList<>();
 	private int line = 1;
 	private int ch = 1;
 	
@@ -18,7 +20,14 @@ public class Tokenizer {
 			characters.addLast(c);
 	}
 	
+	public void pushTokens(Token token) {
+		pushedTokens.add(token);
+	}
+	
 	public Token next() {
+		if (pushedTokens.size() != 0)
+			return pushedTokens.remove(pushedTokens.size()-1);
+		
 		StringBuilder builder = new StringBuilder();
 		State state = State.NONE;
 		int lowch = ch;
