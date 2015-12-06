@@ -4,9 +4,7 @@ import minusk.interp.parse.Keyword;
 import minusk.interp.parse.SyntaxError;
 import minusk.interp.parse.Tokenizer;
 import minusk.interp.parse.token.*;
-import minusk.interp.parse.tree.partial.Expression;
-import minusk.interp.parse.tree.partial.FuncBody;
-import minusk.interp.parse.tree.partial.SimpleDeclaration;
+import minusk.interp.parse.tree.partial.*;
 import minusk.interp.parse.tree.statements.*;
 
 import java.util.ArrayList;
@@ -17,14 +15,16 @@ import java.util.stream.Collectors;
  * Created by MinusKelvin on 12/5/15.
  */
 public class ParseTree {
-	
+	public final ArrayList<Statement> statements = new ArrayList<>();
 	
 	public ParseTree(String code) {
 		Tokenizer in = new Tokenizer(code);
 		Statement stmt;
 		do {
 			stmt = parseStmt(in);
-			System.out.println(stmt);
+			if (stmt != null)
+				statements.add(stmt);
+			System.out.println(stmt != null ? stmt.serialize("") : null);
 		} while (stmt != null);
 	}
 	
@@ -40,7 +40,17 @@ public class ParseTree {
 				return stmt;
 			case IDENTIFIER:
 				Token second = in.next();
-				if (second.type == Token.TokenType.IDENTIFIER) {
+				if (second.type == Token.TokenType.OPEN_BRACKET) {
+					Token third = in.next();
+					if (third.type == Token.TokenType.CLOSE_BRACKET) {
+						in.pushTokens(third);
+						in.pushTokens(second);
+						in.pushTokens(first);
+						stmt.declaration = parseDeclaration(in);
+						break;
+					}
+					in.pushTokens(third);
+				} else if (second.type == Token.TokenType.IDENTIFIER) {
 					in.pushTokens(second);
 					in.pushTokens(first);
 					stmt.declaration = parseDeclaration(in);
@@ -66,12 +76,15 @@ public class ParseTree {
 						case DO:
 							stmt.loop = parseDo(in);
 							break base;
-						case FUNC:
+						case FUNC:case STATIC:case CONST:case STRUCT:
 							in.pushTokens(first);
 							stmt.declaration = parseDeclaration(in);
 							break base;
-						case LAMBDA:
+						case NEW:
 							break;
+						case TYPEDEF:
+							stmt.typeDef = parseTypeDef(in);
+							break base;
 						default:
 							throw new SyntaxError("Unexpected token: '" + first + "'" + first.generateLineChar());
 					}
@@ -113,10 +126,28 @@ public class ParseTree {
 				atom.literal = literal;
 				break;
 			case IDENTIFIER:
-				Identifier identifier = new Identifier();
-				identifier.name = ((IdentifierToken) expectAtom).value;
-				atom.identifier = identifier;
+				atom.identifier = new Identifier();
+				atom.identifier.name = ((IdentifierToken) expectAtom).value;
 				break;
+			case KEYWORD:
+				if (((KeywordToken) expectAtom).value == Keyword.NEW) {
+					Token next = in.next();
+					if (next.type == Token.TokenType.KEYWORD) {
+						Keyword keyword = ((KeywordToken) next).value;
+						if (keyword == Keyword.FUNC)
+							atom.func = parseLambda(in);
+						else if (keyword == Keyword.STRUCT) {
+							in.pushTokens(next);
+							atom.struct = parseNewStruct(in);
+						} else
+							throw new SyntaxError("Expected struct identifier or func got: '" + next + "'" + next.generateLineChar());
+					} else if (next.type == Token.TokenType.IDENTIFIER) {
+						in.pushTokens(next);
+						atom.struct = parseNewStruct(in);
+					} else
+						throw new SyntaxError("Expected struct for func got: '" + next + "'" + next.generateLineChar());
+					break;
+				}
 			default:
 				throw new SyntaxError("Expected an atom, got: '" + expectAtom + "'" + expectAtom.generateLineChar());
 		}
@@ -408,6 +439,8 @@ public class ParseTree {
 				isFunc = true;
 				next = in.next();
 				break;
+			} else if (keyword == Keyword.STRUCT) {
+				break;
 			}
 			next = in.next();
 		}
@@ -461,29 +494,52 @@ public class ParseTree {
 	
 	private TypeDef parseType(Tokenizer in) {
 		TypeDef typeDef = new TypeDef();
-		Token first = in.next();
-		if (first.type == Token.TokenType.KEYWORD) {
-			switch (((KeywordToken) first).value) {
+		Token next = in.next();
+		if (next.type == Token.TokenType.KEYWORD) {
+			switch (((KeywordToken) next).value) {
 				case FUNC:
+					typeDef.returnType = parseType(in);
+					next = in.next();
+					if (next.type != Token.TokenType.OPEN_PARENTHESIS)
+						throw new SyntaxError("Expected ( got: '"+next+"'"+next.generateLineChar());
+					typeDef.paramTypes = parseParamTypeList(in);
 					break;
 				case STRUCT:
+					next = in.next();
+					if (next.type != Token.TokenType.OPEN_BRACE)
+						throw new SyntaxError("Expected { got: '"+next+"'"+next.generateLineChar());
+					typeDef.fields = parseStructFields(in);
 					break;
 				default:
-					throw new SyntaxError("Expected func struct or identifier got: '"+first+"'"+first.generateLineChar());
+					throw new SyntaxError("Expected func struct or identifier got: '"+next+"'"+next.generateLineChar());
 			}
-		} else if (first.type == Token.TokenType.IDENTIFIER) {
+		} else if (next.type == Token.TokenType.IDENTIFIER) {
 			typeDef.typeName = new Identifier();
-			typeDef.typeName.name = ((IdentifierToken) first).value;
+			typeDef.typeName.name = ((IdentifierToken) next).value;
 		} else
-			throw new SyntaxError("Expected func struct or identifier got: '"+first+"'"+first.generateLineChar());
+			throw new SyntaxError("Expected func struct or identifier got: '"+next+"'"+next.generateLineChar());
+		next = in.next();
+		while (next.type == Token.TokenType.OPEN_BRACKET) {
+			next = in.next();
+			if (next.type != Token.TokenType.CLOSE_BRACKET)
+				throw new SyntaxError("Expected ] got: '"+next+"'"+next.generateLineChar());
+			next = in.next();
+			TypeDef type = new TypeDef();
+			type.arrayOf = typeDef;
+			typeDef = type;
+		}
+		in.pushTokens(next);
 		return typeDef;
 	}
 	
 	private ArrayList<TypeDef> parseParamTypeList(Tokenizer in) {
+		// ( should have already been parsed
 		ArrayList<TypeDef> types = new ArrayList<>();
 		Token next = in.next();
 		if (next.type == Token.TokenType.CLOSE_PARENTHESIS)
 			return types;
+		in.pushTokens(next);
+		types.add(parseType(in));
 		next = in.next();
 		while (true) {
 			if (next.type == Token.TokenType.CLOSE_PARENTHESIS)
@@ -522,5 +578,83 @@ public class ParseTree {
 		dec.name = new Identifier();
 		dec.name.name = ((IdentifierToken) ident).value;
 		return dec;
+	}
+	
+	private FuncBody parseLambda(Tokenizer in) {
+		// Lambda keyword should have already been parsed
+		FuncBody lambda = new FuncBody();
+		lambda.type = new TypeDef();
+		lambda.type.returnType = parseType(in);
+		lambda.type.paramTypes = new ArrayList<>();
+		Token next = in.next();
+		if (next.type != Token.TokenType.OPEN_PARENTHESIS)
+			throw new SyntaxError("Expected ( got: '"+next+"'"+next.generateLineChar());
+		lambda.params = parseParamList(in);
+		lambda.type.paramTypes.addAll(lambda.params.stream().map(d -> d.type).collect(Collectors.toList()));
+		next = in.next();
+		if (next.type != Token.TokenType.OPEN_BRACE)
+			throw new SyntaxError("Expected { got: '"+next+"'"+next.generateLineChar());
+		lambda.body = parseBlock(in);
+		return lambda;
+	}
+	
+	private ArrayList<SimpleDeclaration> parseStructFields(Tokenizer in) {
+		// Open brace should have already been parsed
+		ArrayList<SimpleDeclaration> fields = new ArrayList<>();
+		Token next = in.next();
+		if (next.type == Token.TokenType.CLOSE_BRACE)
+			return fields;
+		in.pushTokens(next);
+		fields.add(parseSimpleDeclaration(in));
+		next = in.next();
+		while (true) {
+			if (next.type == Token.TokenType.CLOSE_BRACE)
+				return fields;
+			if (next.type != Token.TokenType.COMMA)
+				throw new SyntaxError("Expected } or , got: '"+next+"'"+next.generateLineChar());
+			fields.add(parseSimpleDeclaration(in));
+			next = in.next();
+		}
+	}
+	
+	private TypeDef parseTypeDef(Tokenizer in) {
+		TypeDef typeDef = new TypeDef();
+		Token next = in.next();
+		if (next.type != Token.TokenType.IDENTIFIER)
+			throw new SyntaxError("Expected identifier got: '"+next+"'"+next.generateLineChar());
+		typeDef.typeName = new Identifier();
+		typeDef.typeName.name = ((IdentifierToken) next).value;
+		next = in.next();
+		if (next.type != Token.TokenType.ASSIGN)
+			throw new SyntaxError("Expected = got: '"+next+"'"+next.generateLineChar());
+		typeDef.returnType = parseType(in);
+		return typeDef;
+	}
+	
+	private StructInitializer parseNewStruct(Tokenizer in) {
+		StructInitializer struct = new StructInitializer();
+		struct.fieldValues = new ArrayList<>();
+		struct.type = parseType(in);
+		Token next = in.next();
+		if (next.type != Token.TokenType.OPEN_BRACE)
+			throw new SyntaxError("Expected { got: '"+next+"'"+next.generateLineChar());
+		while (true) {
+			next = in.next();
+			if (next.type != Token.TokenType.IDENTIFIER)
+				throw new SyntaxError("Expected identifier got: '"+next+"'"+next.generateLineChar());
+			StructField field = new StructField();
+			field.name = new Identifier();
+			field.name.name = ((IdentifierToken) next).value;
+			next = in.next();
+			if (next.type != Token.TokenType.ASSIGN)
+				throw new SyntaxError("Expected = got: '"+next+"'"+next.generateLineChar());
+			field.value = parseExpr(in, OperatorLevel.lowest);
+			struct.fieldValues.add(field);
+			next = in.next();
+			if (next.type == Token.TokenType.CLOSE_BRACE)
+				return struct;
+			if (next.type != Token.TokenType.COMMA)
+				throw new SyntaxError("Expected } or , got: '"+next+"'"+next.generateLineChar());
+		}
 	}
 }

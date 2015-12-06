@@ -4,7 +4,7 @@ package minusk.interp.parse;
  * Created by MinusKelvin on 12/3/15.
  */
 public enum Keyword {
-	LAMBDA,
+	TYPEDEF,
 	RETURN,
 	STRUCT,
 	STATIC,
@@ -13,6 +13,7 @@ public enum Keyword {
 	ELSE,
 	FUNC,
 	FOR,
+	NEW,
 	IF,
 	DO,
 }

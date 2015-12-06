@@ -100,8 +100,8 @@ public class Tokenizer {
 						ch--;
 						String name = builder.toString();
 						switch (name) {
-							case "lambda":
-								return new KeywordToken(Keyword.LAMBDA, line, lowch, ch);
+							case "typedef":
+								return new KeywordToken(Keyword.TYPEDEF, line, lowch, ch);
 							case "return":
 								return new KeywordToken(Keyword.RETURN, line, lowch, ch);
 							case "static":
@@ -118,6 +118,8 @@ public class Tokenizer {
 								return new KeywordToken(Keyword.ELSE, line, lowch, ch);
 							case "for":
 								return new KeywordToken(Keyword.FOR, line, lowch, ch);
+							case "new":
+								return new KeywordToken(Keyword.NEW, line, lowch, ch);
 							case "if":
 								return new KeywordToken(Keyword.IF, line, lowch, ch);
 							case "do":

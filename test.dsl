@@ -112,34 +112,6 @@ a.b[1];
 
 a()[1].a;
 
-int a;                                                              // int uninitialized
-int b = 0;                                                          // int
-int c = 2 + 3;                                                      // int
-int d = (34 + 6) * 27;                                              // int
-int e = functionCall(56);                                           // int
-int f = d;                                                          // int
-func int() j;                                                       // int() uninitialized
-func int h() {return 26;}                                           // int()
-func float i(int ia) {return ia / 2.35;}                            // float(int)
-func int() k = lambda int() {return 26;};                           // int()
-func float(int) l = lambda float(int la) {la / b};                  // float(int)
-func int(int, int) m = lambda int(int ma, int mb) {m(ma,mb-1) * ma};// int(int,int)
-struct p {int pa, int pb};                                          // p == struct{int pa, int pb} declaration
-struct {int qa, int qb} q;                                          // struct{int qa, int qb}
-p r;                                                                // struct{int pa, int pb}
-p s = p {pa = 0; pb = 5};                                           // struct{int pa, int pb}
-p t = s;                                                            // struct{int pa, int pb}
-struct {int pa, int pb} u = s;                                      // struct{int pa, int pb}
-p v = {p va = {pa = 0; pb = 0;}; va.pa = s.pb; va};                 // struct{int pa, int pb}
-struct w p;                                                         // w == p == struct{int pa, int pb} declaration
-int[] x;                                                            // int[] uninitialized
-int[] y = [1,2,3,4,5];                                              // int[]
-int[] z = [0;5];                                                    // int[]
-int[][] A = [[11,12,13,14,15],[21,22,23,24,25]];                    // int[][]
-func void(struct {int Ba, int Bb}) B;                               // void(struct{int Ba, int Bb}) uninitialized
-struct n {struct {int na, float nb}, int nc};                       // n == struct{struct{int na, float nb}, int nc} declaration
-
-
 func int fib(int n) {
 	if (n == 1)
 		return 1;
@@ -148,3 +120,39 @@ func int fib(int n) {
 	else
 		return fib(n-1) + fib(n-2);
 }
+
+func func int() h() {
+	return new func int() {return 0;};
+}
+
+static const int zed = 'Z';
+const static int zee = 'Z';
+const int ze = 'z';
+static int z = 'z';
+
+int a;                                                                         // int uninitialized
+int b = 0;                                                                     // int
+int c = 2 + 3;                                                                 // int
+int d = (34 + 6) * 27;                                                         // int
+int e = functionCall(56);                                                      // int
+int f = d;                                                                     // int
+func int() j;                                                                  // int() uninitialized
+func int h() {return 26;}                                                      // int()
+func float i(int ia) {return ia / 2.35;}                                       // float(int)
+func int() k = new func int() {return 26;};                                    // int()
+func float(int) l = new func float(int la) {return la / b;};                   // float(int)
+func int(int, int) m = new func int(int ma, int mb) {return m(ma,mb-1) * ma;}; // int(int,int)
+struct{int qa, int qb} q;                                                      // struct{int qa, int qb}
+typedef p = struct{int pa, int pb};                                            // p == struct{int pa, int pb} declaration
+p r = new p {pa = 0, pb = 5};                                                  // struct{int pa, int pb}
+p t = s;                                                                       // struct{int pa, int pb}
+struct {int pa, int pb} u = s;                                                 // struct{int pa, int pb}
+typedef w = p;                                                                 // w == p == struct{int pa, int pb} declaration
+int[] x;                                                                       // int[] uninitialized
+int[] y = [1,2,3,4,5];                                                         // int[]
+int[] z = [0;5];                                                               // int[]
+int[][] A = [[11,12,13,14,15],[21,22,23,24,25]];                               // int[][]
+func void(struct {int Ba, int Bb}) B;                                          // void(struct{int Ba, int Bb}) uninitialized
+typedef n = struct {struct {int na, float nb} nc, int nd};                     // n == struct{struct{int na, float nb} nc, int nd} declaration
+
+new struct{func int[](float[]) several} {several = new func int[](float[] i) {return [0;i.length];}}.pa[0];

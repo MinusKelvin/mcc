@@ -3,7 +3,7 @@ package minusk.interp.parse.tree;
 /**
  * Created by MinusKelvin on 12/5/15.
  */
-public class Literal {
+public class Literal extends Serializable {
 	public boolean isInt;
 	public long intValue;
 	public boolean isDecimal;
@@ -20,5 +20,10 @@ public class Literal {
 		if (isString)
 			return "string:"+stringValue;
 		throw new IllegalStateException("untyped literal");
+	}
+	
+	@Override
+	public String serialize(String indent) {
+		return toString();
 	}
 }
