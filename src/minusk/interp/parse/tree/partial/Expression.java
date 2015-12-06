@@ -1,9 +1,9 @@
 package minusk.interp.parse.tree.partial;
 
 import minusk.interp.parse.token.Token;
-import minusk.interp.parse.tree.Identifier;
 import minusk.interp.parse.tree.Literal;
 import minusk.interp.parse.tree.Serializable;
+import minusk.interp.parse.tree.statements.TypeDef;
 
 import java.util.ArrayList;
 
@@ -12,7 +12,7 @@ import java.util.ArrayList;
  */
 public class Expression extends Serializable {
 	public Literal literal;
-	public Identifier identifier;
+	public String identifier;
 	public Expression lhs;
 	public Expression rhs;
 	public Token operator;
@@ -23,9 +23,10 @@ public class Expression extends Serializable {
 	public Expression index;
 	public FuncBody func;
 	public StructInitializer struct;
+	public TypeDef arrayType;
 	
 	@Override
-	public String toString() {
+	public java.lang.String toString() {
 		if (literal != null)
 			return "expr:"+literal;
 		if (identifier != null)
@@ -45,15 +46,19 @@ public class Expression extends Serializable {
 	}
 	
 	@Override
-	public String serialize(String indent) {
+	public java.lang.String serialize(java.lang.String indent) {
 		if (literal != null)
 			return "expr:"+literal.serialize(indent);
 		if (identifier != null)
-			return "expr:"+identifier.serialize(indent);
+			return "expr:ident:"+identifier;
 		if (array != null)
-			return "expr:array:" + serial(array,indent);
+			return "expr:array:{\n" +
+					indent+"\ttype:"+arrayType.serialize(indent+"\t")+",\n" +
+					indent+"\telems:" + serial(array,indent+"\t") + "\n" +
+					indent+"}";
 		if (arrayInit != null)
 			return "expr:array:{\n" +
+					indent+"\ttype:"+arrayType.serialize(indent+"\t")+",\n" +
 					indent+"\tinit:"+arrayInit.serialize(indent+"\t")+",\n" +
 					indent+"\tlen:"+arrayInitCount.serialize(indent+"\t")+"\n" +
 					indent+"}";

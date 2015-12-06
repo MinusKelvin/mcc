@@ -1,5 +1,6 @@
 package minusk.interp;
 
+import minusk.interp.exectree.Code;
 import minusk.interp.parse.tree.ParseTree;
 
 import java.io.File;
@@ -38,7 +39,7 @@ public class TerminalInterface {
 			String s = scanner.hasNext() ? scanner.next() : "";
 			scanner.close();
 			ParseTree syntree = new ParseTree(s);
-			System.out.println(syntree);
+			Code code = new Code(syntree);
 		}
 	}
 }

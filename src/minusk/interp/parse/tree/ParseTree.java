@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class ParseTree {
 	public final ArrayList<Statement> statements = new ArrayList<>();
 	
-	public ParseTree(String code) {
+	public ParseTree(java.lang.String code) {
 		Tokenizer in = new Tokenizer(code);
 		Statement stmt;
 		do {
@@ -89,8 +89,7 @@ public class ParseTree {
 							throw new SyntaxError("Unexpected token: '" + first + "'" + first.generateLineChar());
 					}
 				}
-			case INTEGER:case OPEN_PARENTHESIS:case SUB:case BITWISE_NOT:
-			case LOGICAL_NOT:case OPEN_BRACKET:case INCREMENT:case DECREMENT:
+			case INTEGER:case OPEN_PARENTHESIS:case SUB:case BITWISE_NOT:case LOGICAL_NOT:case INCREMENT:case DECREMENT:
 				in.pushTokens(first);
 				stmt.expression = parseExpr(in,OperatorLevel.lowest);
 				break;
@@ -111,8 +110,6 @@ public class ParseTree {
 		switch (expectAtom.type) {
 			case OPEN_PARENTHESIS:
 				return parseParen(in);
-			case OPEN_BRACKET:
-				return parseArray(in);
 			case INTEGER:
 				Literal literal = new Literal();
 				literal.intValue = ((IntToken) expectAtom).value;
@@ -126,8 +123,7 @@ public class ParseTree {
 				atom.literal = literal;
 				break;
 			case IDENTIFIER:
-				atom.identifier = new Identifier();
-				atom.identifier.name = ((IdentifierToken) expectAtom).value;
+				atom.identifier = ((IdentifierToken) expectAtom).value;
 				break;
 			case KEYWORD:
 				if (((KeywordToken) expectAtom).value == Keyword.NEW) {
@@ -138,12 +134,16 @@ public class ParseTree {
 							atom.func = parseLambda(in);
 						else if (keyword == Keyword.STRUCT) {
 							in.pushTokens(next);
-							atom.struct = parseNewStruct(in);
+							atom.struct = parseNewStruct(parseType(in),in);
 						} else
 							throw new SyntaxError("Expected struct identifier or func got: '" + next + "'" + next.generateLineChar());
 					} else if (next.type == Token.TokenType.IDENTIFIER) {
 						in.pushTokens(next);
-						atom.struct = parseNewStruct(in);
+						TypeDef type = parseType(in);
+						if (type.arrayOf != null)
+							atom = parseArray(type, in);
+						else
+							atom.struct = parseNewStruct(type, in);
 					} else
 						throw new SyntaxError("Expected struct for func got: '" + next + "'" + next.generateLineChar());
 					break;
@@ -301,42 +301,60 @@ public class ParseTree {
 		return block;
 	}
 	
-	private Expression parseArray(Tokenizer in) {
-		// Open Bracket should have already been parsed
-		Expression ary = new Expression();
+	private Expression parseArray(TypeDef type, Tokenizer in) {
+		Expression array = new Expression();
+		array.arrayType = type;
+		boolean allowNesting = type.arrayOf.arrayOf != null;
+		
 		Token next = in.next();
-		if (next.type == Token.TokenType.CLOSE_BRACKET) {
-			ary.array = new ArrayList<>();
-			return ary;
-		}
-		in.pushTokens(next);
-		Expression t = parseExpr(in,OperatorLevel.lowest);
+		if (next.type != Token.TokenType.OPEN_BRACE)
+			throw new SyntaxError("Expected { got: '"+next+"'"+next.generateLineChar());
+		
+		Expression initial;
+		
 		next = in.next();
-		switch (next.type) {
-			case COMMA:
-				ary.array = new ArrayList<>();
-				ary.array.add(t);
-				while (true) {
-					ary.array.add(parseExpr(in,OperatorLevel.lowest));
-					next = in.next();
-					if (next.type == Token.TokenType.CLOSE_BRACKET)
-						return ary;
-					if (next.type != Token.TokenType.COMMA)
-						throw new SyntaxError("Expected ] or , got: '"+next+"'"+next.generateLineChar());
-				}
-			case SEMICOLON:
-				ary.arrayInit = t;
-				ary.arrayInitCount = parseExpr(in,OperatorLevel.lowest);
-				Token expectBracket = in.next();
-				if (expectBracket.type != Token.TokenType.CLOSE_BRACKET)
-					throw new SyntaxError("Expected ] got: '"+expectBracket+"'"+expectBracket.generateLineChar());
-				return ary;
-			case CLOSE_BRACKET:
-				ary.array = new ArrayList<>();
-				ary.array.add(t);
-				return ary;
-			default:
-				throw new SyntaxError("Expected ] , or ; got: '"+next+"'"+next.generateLineChar());
+		if (next.type == Token.TokenType.CLOSE_BRACE) {
+			array.array = new ArrayList<>();
+			return array;
+		} else {
+			in.pushTokens(next);
+			if (allowNesting && next.type == Token.TokenType.OPEN_BRACE) {
+				initial = parseArray(type.arrayOf, in);
+			} else
+				initial = parseExpr(in, OperatorLevel.lowest);
+		}
+		
+		next = in.next();
+		if (next.type == Token.TokenType.CLOSE_BRACE) {
+			array.array = new ArrayList<>();
+			array.array.add(initial);
+			return array;
+		} else if (next.type == Token.TokenType.SEMICOLON) {
+			array.arrayInit = initial;
+			array.arrayInitCount = parseExpr(in, OperatorLevel.lowest);
+			next = in.next();
+			if (next.type != Token.TokenType.CLOSE_BRACE)
+				throw new SyntaxError("Expected } got: '"+next+"'"+next.generateLineChar());
+			return array;
+		}
+		
+		array.array = new ArrayList<>();
+		array.array.add(initial);
+		while (true) {
+			if (next.type == Token.TokenType.CLOSE_BRACE)
+				return array;
+			if (next.type != Token.TokenType.COMMA)
+				throw new SyntaxError("Expected } or , got: '"+next+"'"+next.generateLineChar());
+			next = in.next();
+			if (allowNesting && next.type == Token.TokenType.OPEN_BRACE) {
+				in.pushTokens(next);
+				array.array.add(parseArray(type.arrayOf, in));
+				next = in.next();
+				continue;
+			}
+			in.pushTokens(next);
+			array.array.add(parseExpr(in,OperatorLevel.lowest));
+			next = in.next();
 		}
 	}
 	
@@ -461,8 +479,7 @@ public class ParseTree {
 			} else
 				throw new SyntaxError("Expected identifier got: '" + next + "'" + next.generateLineChar());
 		}
-		decl.name = new Identifier();
-		decl.name.name = ((IdentifierToken) next).value;
+		decl.name = ((IdentifierToken) next).value;
 		
 		if (!funcTypesigDone && isFunc) {
 			next = in.next();
@@ -514,8 +531,7 @@ public class ParseTree {
 					throw new SyntaxError("Expected func struct or identifier got: '"+next+"'"+next.generateLineChar());
 			}
 		} else if (next.type == Token.TokenType.IDENTIFIER) {
-			typeDef.typeName = new Identifier();
-			typeDef.typeName.name = ((IdentifierToken) next).value;
+			typeDef.typeName = ((IdentifierToken) next).value;
 		} else
 			throw new SyntaxError("Expected func struct or identifier got: '"+next+"'"+next.generateLineChar());
 		next = in.next();
@@ -575,8 +591,7 @@ public class ParseTree {
 		Token ident = in.next();
 		if (ident.type != Token.TokenType.IDENTIFIER)
 			throw new SyntaxError("Expected identifier got: '"+ident+"'"+ident.generateLineChar());
-		dec.name = new Identifier();
-		dec.name.name = ((IdentifierToken) ident).value;
+		dec.name = ((IdentifierToken) ident).value;
 		return dec;
 	}
 	
@@ -622,8 +637,7 @@ public class ParseTree {
 		Token next = in.next();
 		if (next.type != Token.TokenType.IDENTIFIER)
 			throw new SyntaxError("Expected identifier got: '"+next+"'"+next.generateLineChar());
-		typeDef.typeName = new Identifier();
-		typeDef.typeName.name = ((IdentifierToken) next).value;
+		typeDef.typeName = ((IdentifierToken) next).value;
 		next = in.next();
 		if (next.type != Token.TokenType.ASSIGN)
 			throw new SyntaxError("Expected = got: '"+next+"'"+next.generateLineChar());
@@ -631,10 +645,10 @@ public class ParseTree {
 		return typeDef;
 	}
 	
-	private StructInitializer parseNewStruct(Tokenizer in) {
+	private StructInitializer parseNewStruct(TypeDef type, Tokenizer in) {
 		StructInitializer struct = new StructInitializer();
 		struct.fieldValues = new ArrayList<>();
-		struct.type = parseType(in);
+		struct.type = type;
 		Token next = in.next();
 		if (next.type != Token.TokenType.OPEN_BRACE)
 			throw new SyntaxError("Expected { got: '"+next+"'"+next.generateLineChar());
@@ -643,8 +657,7 @@ public class ParseTree {
 			if (next.type != Token.TokenType.IDENTIFIER)
 				throw new SyntaxError("Expected identifier got: '"+next+"'"+next.generateLineChar());
 			StructField field = new StructField();
-			field.name = new Identifier();
-			field.name.name = ((IdentifierToken) next).value;
+			field.name = ((IdentifierToken) next).value;
 			next = in.next();
 			if (next.type != Token.TokenType.ASSIGN)
 				throw new SyntaxError("Expected = got: '"+next+"'"+next.generateLineChar());

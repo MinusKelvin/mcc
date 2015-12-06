@@ -1,5 +1,5 @@
 0;
-a;
+int a;
 6*5;
 0*a;
 b*2;
@@ -40,11 +40,11 @@ b = a + b;
 	a+=b;
 	return a;
 }
-[1,2,3,4,5];
-[];
-[1];
-[1;10];
-[[1,2,3,4],[1,2,3,4,5],[]];
+new int[] {1,2,3,4,5};
+new int[] {};
+new int[] {1};
+new int[] {1;10};
+new int[][] {{1,2,3,4},{1,2,3,4,5},{}};
 if (true) {
 	blah;
 }
@@ -149,10 +149,10 @@ p t = s;                                                                       /
 struct {int pa, int pb} u = s;                                                 // struct{int pa, int pb}
 typedef w = p;                                                                 // w == p == struct{int pa, int pb} declaration
 int[] x;                                                                       // int[] uninitialized
-int[] y = [1,2,3,4,5];                                                         // int[]
-int[] z = [0;5];                                                               // int[]
-int[][] A = [[11,12,13,14,15],[21,22,23,24,25]];                               // int[][]
+int[] y = new int[] {1,2,3,4,5};                                               // int[]
+int[] z = new int[] {0;5};                                                     // int[]
+int[][] A = new int[][] {{11,12,13,14,15},{21,22,23,24,25}};                   // int[][]
 func void(struct {int Ba, int Bb}) B;                                          // void(struct{int Ba, int Bb}) uninitialized
 typedef n = struct {struct {int na, float nb} nc, int nd};                     // n == struct{struct{int na, float nb} nc, int nd} declaration
 
-new struct{func int[](float[]) several} {several = new func int[](float[] i) {return [0;i.length];}}.pa[0];
+new struct{func int[](float[]) several} {several = new func int[](float[] i) {return new int[] {0;i.length};}}.pa[0];
