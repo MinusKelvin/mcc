@@ -21,11 +21,11 @@ public class Loop extends Serializable {
 	@Override
 	public String serialize(String indent) {
 		return "loop:{\n" +
-				indent+"\t"+serial(initialize,indent+"\t")+",\n"+
-				indent+"\t"+conditionLast+",\n"+
-				indent+"\t"+serial(condition,indent+"\t")+",\n"+
-				indent+"\t"+serial(increment,indent+"\t")+",\n"+
-				indent+"\t"+body.serialize(indent+"\t")+",\n"+
+				indent+"\tinit:"+serial(initialize,indent+"\t")+",\n"+
+				indent+"\tcheckEnd:"+conditionLast+",\n"+
+				indent+"\tcondition:"+serial(condition,indent+"\t")+",\n"+
+				indent+"\tincrement:"+serial(increment,indent+"\t")+",\n"+
+				indent+"\tbody:"+body.serialize(indent+"\t")+",\n"+
 				indent+"}";
 	}
 }

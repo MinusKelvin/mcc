@@ -3,7 +3,6 @@ package minusk.interp.parse.tree.partial;
 import minusk.interp.parse.token.Token;
 import minusk.interp.parse.tree.Literal;
 import minusk.interp.parse.tree.Serializable;
-import minusk.interp.parse.tree.statements.TypeDef;
 
 import java.util.ArrayList;
 

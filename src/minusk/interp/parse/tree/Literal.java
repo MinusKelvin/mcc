@@ -10,6 +10,8 @@ public class Literal extends Serializable {
 	public double decimalValue;
 	public boolean isString;
 	public String stringValue;
+	public boolean booleanValue;
+	public boolean isBoolean;
 	
 	@Override
 	public String toString() {
@@ -19,7 +21,9 @@ public class Literal extends Serializable {
 			return "decimal:"+decimalValue;
 		if (isString)
 			return "string:"+stringValue;
-		throw new IllegalStateException("untyped literal");
+		if (isBoolean)
+			return "boolean:"+booleanValue;
+		return "null";
 	}
 	
 	@Override

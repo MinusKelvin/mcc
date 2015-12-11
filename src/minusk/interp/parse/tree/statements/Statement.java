@@ -13,7 +13,8 @@ public class Statement extends Serializable {
 	public Branch branch;
 	public Loop loop;
 	public Declaration declaration;
-	public TypeDef typeDef;
+	public TypeDeclaration typeDec;
+	public boolean nullStmt;
 	
 	@Override
 	public String toString() {
@@ -41,8 +42,10 @@ public class Statement extends Serializable {
 			return "stmt:"+loop.serialize(indent);
 		if (declaration != null)
 			return "stmt:"+declaration.serialize(indent);
-		if (typeDef != null)
-			return "stmt:"+typeDef.serialize(indent);
+		if (typeDec != null)
+			return "stmt:"+typeDec.serialize(indent);
+		if (nullStmt)
+			return "stmt:null";
 		return "stmt:returns:"+serial(returns,indent);
 	}
 }

@@ -76,8 +76,6 @@ public class Tokenizer {
 						return new Token(Token.TokenType.SEMICOLON, line, lowch, ch);
 					else if (c == ',')
 						return new Token(Token.TokenType.COMMA, line, lowch, ch);
-					else if (c == '?')
-						return new Token(Token.TokenType.QUESTION, line, lowch, ch);
 					else if (c == '~')
 						return new Token(Token.TokenType.BITWISE_NOT, line, lowch, ch);
 					else if (c == '+' || c == '-' || c == '*' || c == '/' || c == '<' || c == '>' ||
@@ -100,12 +98,8 @@ public class Tokenizer {
 						ch--;
 						String name = builder.toString();
 						switch (name) {
-							case "typedef":
-								return new KeywordToken(Keyword.TYPEDEF, line, lowch, ch);
 							case "return":
 								return new KeywordToken(Keyword.RETURN, line, lowch, ch);
-							case "static":
-								return new KeywordToken(Keyword.STATIC, line, lowch, ch);
 							case "struct":
 								return new KeywordToken(Keyword.STRUCT, line, lowch, ch);
 							case "const":
@@ -124,6 +118,12 @@ public class Tokenizer {
 								return new KeywordToken(Keyword.IF, line, lowch, ch);
 							case "do":
 								return new KeywordToken(Keyword.DO, line, lowch, ch);
+							case "true":
+								return new Token(Token.TokenType.TRUE, line, lowch, ch);
+							case "false":
+								return new Token(Token.TokenType.FALSE, line, lowch, ch);
+							case "null":
+								return new Token(Token.TokenType.NULL, line, lowch, ch);
 							default:
 								return new IdentifierToken(name, line, lowch, ch);
 						}
